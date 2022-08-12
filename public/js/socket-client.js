@@ -2,8 +2,12 @@
 
 const txtOnline = document.querySelector('#txtOnline')
 const txtOffline = document.querySelector('#txtOffline')
-const txtMensaje = document.querySelector('#txtMensaje')
-const btnEnviar = document.querySelector('#btnEnviar')
+let message = document.querySelector('#message')
+let username = document.querySelector('#username')
+let output = document.querySelector('#output')
+let actions = document.querySelector('#actions')
+let btn = document.querySelector('#send')
+
 
 
 
@@ -17,27 +21,40 @@ socket.on('connect', ()=>{
 
 })
 
+// Envio de mensaje
+btn.addEventListener('click', ()=>{
+
+    const payload = {
+        message: message.value,
+        username: username.value
+    }
+
+    socket.emit('chat:message', 
+                payload, 
+                () => { console.log('Desde el server')}
+    )
+})
+
+message.addEventListener('keypress', ()=>{
+    //console.log(e.key)
+    socket.emit('chat:typing', username.value)
+})
+
+socket.on('chat:typing', (data)=>{
+    actions.innerHTML = `<p><em>${data} is typing a message...</em></p>`
+})
+
+socket.on('chat:message', (payload)=> {
+    actions.innerHTML = ''
+    output.innerHTML += `
+        <p><strong>${payload.username}</strong>: ${payload.message}</p>
+    `           
+})
+
+
 socket.on('disconnect', ()=>{
     console.log('Desconectado del servidor')
 
     txtOffline.style.display = ''
     txtOnline.style.display = 'none'
-})
-
-socket.on('enviar-mensaje', (payload)=> {
-    console.log(payload)
-})
-
-// Envio de mensaje
-btnEnviar.addEventListener('click', ()=>{
-    const mensaje = txtMensaje.value
-    const payload = {
-        mensaje,
-        id: '155B7',
-        fecha: new Date().getTime()
-    }
-
-    socket.emit('enviar-mensaje', payload, (id) => {
-        console.log('Desde el server', id)
-    })
 })
